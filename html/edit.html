@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <form action="/edit" method="POST">
+        	<table>
+        		<thead>
+        			<tr>
+        				<th colspan="2">內容編輯</th>
+        			</tr>
+        		</thead>
+        		<tbody>
+	        		<tr>
+	        			<th>title</th>
+	        			<td><input type="text" name="title" value="{{.Title}}" /></td>
+	        		</tr>
+	        		<tr>
+	        			<th>content</th>
+	        			<td><textarea name="content">{{.Content}}</textarea></td>
+	        		</tr>
+	        		<tr>
+	        			<th></th>
+	        			<td>
+                            <input type="hidden" value="{{.Id}}" name="id" />
+                            <button type="submit">save</button>
+                        </td>
+	        		</tr>
+        		</tbody>
+        	</table>
+        </form>
+    </body>
+</html>
