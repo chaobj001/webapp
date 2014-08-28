@@ -6,10 +6,24 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body>
+        <p><a href="/posts">Back lists</a></p>
         {{with .Post}}
             <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
             <p>{{.Content}}</p>
             <p>{{.Date}}</p>
         {{end}}
+        <ul>
+            {{with .Replies}}
+                {{range .}}
+                <li>{{.Date}} {{.Content}}</li>
+                {{end}}
+            {{end}}
+        </ul>
+        <form method="post" action="/reply">
+            
+            <textarea name="content"></textarea>
+            <button type="submit">回复</button>
+            <input type="hidden" name="id" value="{{.Post.Id}}" />
+        </form>
     </body>
 </html>

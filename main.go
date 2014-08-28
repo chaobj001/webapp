@@ -14,11 +14,13 @@ import (
 )
 
 type Post struct {
-	Id      int
-	Title   string
-	Content string
-	Time    int
-	Date    string
+	Id        int
+	Parent_id int
+	Uid       int
+	Title     string
+	Content   string
+	Time      int
+	Date      string
 }
 
 func main() {
@@ -31,6 +33,7 @@ func main() {
 	http.HandleFunc("/edit", makeHandler(editHandler))
 	http.HandleFunc("/posts", makeHandler(postsHandler))
 	http.HandleFunc("/publish", makeHandler(publishHandler))
+	http.HandleFunc("/reply", makeHandler(replyHandler))
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -98,7 +101,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢數據
-	rows, err := db.Query("select id, title, content, create_time from posts order by id desc limit ?, ?", start, limit)
+	rows, err := db.Query("select id, title, content, create_time from posts where parent_id=0 order by id desc limit ?, ?", start, limit)
 	checkErr(err)
 	defer rows.Close()
 	type Page struct {
@@ -149,13 +152,14 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		create_time int
 	)
 	type Page struct {
-		Post *Post
+		Post    *Post
+		Replies []*Post
 	}
 	var data Page
 	//db
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
 	checkErr(err)
-	//查詢數據
+	//查詢POST數據
 	err = db.QueryRow("select id, title, content, create_time from posts where id=?", post_id).Scan(&id, &title, &content, &create_time)
 	switch {
 	case err == sql.ErrNoRows:
@@ -165,11 +169,23 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	default:
 		data.Post = &Post{Id: id, Title: title, Content: content, Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
-		//模板應用
-		t, _ := template.ParseFiles("html/post.html")
-		t.Execute(w, data)
 	}
-
+	//查詢reply數據
+	replies, err := db.Query("select id, content, create_time from posts where parent_id=? order by id desc limit ?, ?", post_id, 0, 20)
+	checkErr(err)
+	defer replies.Close()
+	for replies.Next() {
+		var id int
+		var content string
+		var create_time int
+		if err := replies.Scan(&id, &content, &create_time); err != nil {
+			log.Fatal(err)
+		}
+		data.Replies = append(data.Replies, &Post{Id: id, Content: content, Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")})
+	}
+	//模板應用
+	t, _ := template.ParseFiles("html/post.html")
+	t.Execute(w, data)
 }
 
 func editHandler(w http.ResponseWriter, r *http.Request) {
@@ -239,8 +255,38 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		affect, err := res.RowsAffected()
 		checkErr(err)
 		fmt.Println(affect)
-		http.Redirect(w, r, "/posts", http.StatusFound)
+		http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), http.StatusFound)
 	}
+}
+
+func replyHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	//fmt.Println(r.Form)
+	//fmt.Println(r.PostForm)
+	reply_id, _ := strconv.Atoi(r.FormValue("id"))
+	reply_content := strings.TrimSpace(r.FormValue("content"))
+	create_time := time.Now().Unix()
+	if reply_id == 0 {
+		http.Error(w, "回复id不存在", http.StatusForbidden)
+		return
+	}
+	if len(reply_content) == 0 {
+		http.Error(w, "回复内存为空", http.StatusForbidden)
+		return
+	}
+	//db
+	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+	checkErr(err)
+	//插入數據
+	stmt, err := db.Prepare("INSERT posts SET parent_id=?, content=?, create_time=?")
+	checkErr(err)
+	res, err := stmt.Exec(reply_id, reply_content, create_time)
+	checkErr(err)
+	id, err := res.LastInsertId()
+	checkErr(err)
+	fmt.Printf("Insert Id: %d\n", id)
+	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), http.StatusFound)
+
 }
 
 func checkErr(err error) {
