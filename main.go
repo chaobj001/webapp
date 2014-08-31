@@ -255,7 +255,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//db
-		db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
 		checkErr(err)
 		defer db.Close()
 		//插入數據
