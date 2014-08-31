@@ -25,16 +25,20 @@ type Post struct {
 }
 
 func main() {
-	//route
+	//目录设置
 	fileServer := http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
 	http.Handle("/static/", fileServer)
 	fileServer = http.StripPrefix("/html/", http.FileServer(http.Dir("html")))
 	http.Handle("/html/", fileServer)
+	//路由设置
 	http.HandleFunc("/post", makeHandler(postHandler))
 	http.HandleFunc("/edit", makeHandler(editHandler))
 	http.HandleFunc("/posts", makeHandler(postsHandler))
 	http.HandleFunc("/publish", makeHandler(publishHandler))
 	http.HandleFunc("/reply", makeHandler(replyHandler))
+	http.HandleFunc("/reg", makeHandler(regHandler))
+	http.HandleFunc("/login", makeHandler(loginHandler))
+	http.HandleFunc("/logout", makeHandler(logoutHandler))
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -47,6 +51,7 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	}
 }
 
+//发布
 func publishHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		//模板應用
@@ -75,7 +80,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//db
-		db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
 		checkErr(err)
 		//插入數據
 		stmt, err := db.Prepare("INSERT posts SET title=?, content=?, create_time=?")
@@ -89,6 +94,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//列表页
 func postsHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	limit := 5
@@ -99,7 +105,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	start := limit * (p - 1)
 
 	//db
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢數據
 	rows, err := db.Query("select id, title, content, create_time from posts where parent_id=0 order by id desc limit ?, ?", start, limit)
@@ -138,6 +144,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
+//post详情
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	post_id, _ := strconv.Atoi(r.Form.Get("post_id"))
@@ -158,7 +165,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var data Page
 	//db
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢POST數據
 	err = db.QueryRow("select id, title, content, create_time from posts where id=?", post_id).Scan(&id, &title, &content, &create_time)
@@ -189,6 +196,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, data)
 }
 
+//编辑
 func editHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	if r.Method == "GET" {
@@ -210,7 +218,8 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 			Content string
 		}
 		//db
-		db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+		defer db.Close()
 		//查詢數據
 		err = db.QueryRow("select id, title, content from posts where id=?", post_id).Scan(&id, &title, &content)
 		switch {
@@ -248,6 +257,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		//db
 		db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
 		checkErr(err)
+		defer db.Close()
 		//插入數據
 		stmt, err := db.Prepare("update posts SET title=?, content=?, update_time=? where id=?")
 		checkErr(err)
@@ -264,6 +274,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//回复
 func replyHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 	//fmt.Println(r.Form)
@@ -280,17 +291,50 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//db
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
 	checkErr(err)
+	defer db.Close()
 	//插入數據
-	stmt, err := db.Prepare("INSERT posts SET parent_id=?, content=?, create_time=?")
+	insetReply, err := db.Prepare("INSERT posts SET parent_id=?, content=?, create_time=?")
 	checkErr(err)
-	res, err := stmt.Exec(reply_id, reply_content, create_time)
+	//更新post replies
+	updatePost, err := db.Prepare("update posts set replies = replies + 1, last_reply_time = ? where id = ?")
 	checkErr(err)
-	id, err := res.LastInsertId()
-	checkErr(err)
-	fmt.Printf("Insert Id: %d\n", id)
+	//开启事务
+	tx, err := db.Begin()
+	_, err = tx.Stmt(insetReply).Exec(reply_id, reply_content, create_time)
+	if err != nil {
+		fmt.Println("err sql insert reply")
+	} else {
+		_, err = tx.Stmt(updatePost).Exec(create_time, reply_id)
+		if err != nil {
+			fmt.Println("err sql update post by reply")
+		} else {
+			tx.Commit()
+		}
+	}
+	if err != nil {
+		tx.Rollback()
+		http.Error(w, "事务失败", http.StatusForbidden)
+	}
 	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), http.StatusFound)
+}
+
+func regHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		//模板應用
+		t, _ := template.ParseFiles("html/reg.html")
+		t.Execute(w, nil)
+	} else {
+
+	}
+}
+
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
+func logoutHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
@@ -300,6 +344,7 @@ func checkErr(err error) {
 	}
 }
 
+//分页
 type PageNav struct {
 	url      string
 	pagesize int
