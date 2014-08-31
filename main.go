@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/Go-SQL-Driver/MySQL"
+	"github.com/russross/blackfriday"
 	"html/template"
 	"log"
 	"math"
@@ -18,7 +19,7 @@ type Post struct {
 	Parent_id int
 	Uid       int
 	Title     string
-	Content   string
+	Content   interface{}
 	Time      int
 	Date      string
 }
@@ -122,7 +123,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 
 	//獲取總條數
 	var total int
-	err = db.QueryRow("select count(id) as total from posts").Scan(&total)
+	err = db.QueryRow("select count(id) as total from posts where parent_id = 0").Scan(&total)
 	if err == sql.ErrNoRows || err != nil {
 		total = 0
 	}
@@ -168,7 +169,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		log.Fatal(err)
 	default:
-		data.Post = &Post{Id: id, Title: title, Content: content, Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
+		data.Post = &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownCommon([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
 	}
 	//查詢reply數據
 	replies, err := db.Query("select id, content, create_time from posts where parent_id=? order by id desc limit ?, ?", post_id, 0, 20)
@@ -254,8 +255,12 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		checkErr(err)
 		affect, err := res.RowsAffected()
 		checkErr(err)
-		fmt.Println(affect)
-		http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), http.StatusFound)
+		if affect > 0 {
+			http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), http.StatusFound)
+		} else {
+			http.Error(w, "affect", http.StatusForbidden)
+		}
+
 	}
 }
 
@@ -315,3 +320,6 @@ func (p *PageNav) getPage() interface{} {
 	}
 	return template.HTML(html)
 }
+
+// func unescaped (x string) interface{} { return template.HTML(x) }
+// template.FuncMap{"unescaped": unescaped}

@@ -4,12 +4,13 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/static/standard.css" />
     </head>
     <body>
         <p><a href="/posts">Back lists</a></p>
         {{with .Post}}
             <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
-            <p>{{.Content}}</p>
+            <div class="standard">{{.Content}}</div>
             <p>{{.Date}}</p>
         {{end}}
         <ul>
