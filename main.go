@@ -58,7 +58,11 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		t, _ := template.ParseFiles("html/publish.html")
 		t.Execute(w, nil)
 	} else {
-		r.ParseForm() //解析参数，默认是不会解析的
+		//解析参数，默认是不会解析的
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Invalid request form data", 400)
+			return
+		}
 		//fmt.Println(r.Form) //这些信息是输出到服务器端的打印信息
 		//fmt.Println(r.Form["title"])
 		//.Println(r.FormValue("title"))
@@ -90,13 +94,16 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		id, err := res.LastInsertId()
 		checkErr(err)
 		fmt.Printf("Insert Id: %d\n", id)
-		http.Redirect(w, r, "/posts", http.StatusFound)
+		http.Redirect(w, r, "/posts", 302)
 	}
 }
 
 //列表页
 func postsHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request form data", 400)
+		return
+	}
 	limit := 5
 	p, _ := strconv.Atoi(r.Form.Get("page"))
 	if p == 0 {
@@ -146,7 +153,10 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 
 //post详情
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request form data", 400)
+		return
+	}
 	post_id, _ := strconv.Atoi(r.Form.Get("post_id"))
 	if post_id == 0 {
 		http.NotFound(w, r)
@@ -198,7 +208,10 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 //编辑
 func editHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request form data", 400)
+		return
+	}
 	if r.Method == "GET" {
 		post_id, _ := strconv.Atoi(r.Form.Get("post_id"))
 
@@ -266,7 +279,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		affect, err := res.RowsAffected()
 		checkErr(err)
 		if affect > 0 {
-			http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), http.StatusFound)
+			http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), 302)
 		} else {
 			http.Error(w, "affect", http.StatusForbidden)
 		}
@@ -276,7 +289,10 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 
 //回复
 func replyHandler(w http.ResponseWriter, r *http.Request) {
-	r.ParseForm()
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request form data", 400)
+		return
+	}
 	//fmt.Println(r.Form)
 	//fmt.Println(r.PostForm)
 	reply_id, _ := strconv.Atoi(r.FormValue("id"))
@@ -317,7 +333,7 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 		tx.Rollback()
 		http.Error(w, "事务失败", http.StatusForbidden)
 	}
-	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), http.StatusFound)
+	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), 302)
 }
 
 func regHandler(w http.ResponseWriter, r *http.Request) {
@@ -326,7 +342,19 @@ func regHandler(w http.ResponseWriter, r *http.Request) {
 		t, _ := template.ParseFiles("html/reg.html")
 		t.Execute(w, nil)
 	} else {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "Invalid request form data", 400)
+			return
+		}
 
+		username := strings.TrimSpace(r.FormValue("username"))
+		password := strings.TrimSpace(r.FormValue("password"))
+		if username == "" || password == "" {
+			http.Error(w, "用户名密码不能为空", http.StatusForbidden)
+			return
+		}
+		username = strings.ToLower(username)
+		//查询用户名
 	}
 }
 
