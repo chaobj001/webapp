@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/md5"
 	"database/sql"
+	"errors"
 	"fmt"
 	_ "github.com/Go-SQL-Driver/MySQL"
 	"github.com/russross/blackfriday"
@@ -9,10 +11,16 @@ import (
 	"log"
 	"math"
 	"net/http"
+	//"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
+	"webapp/session"
+	_ "webapp/session/memory"
 )
+
+var globalSessions *session.Manager
 
 type Post struct {
 	Id        int
@@ -25,11 +33,18 @@ type Post struct {
 }
 
 func main() {
+	//配置sessions
+	globalSessions, _ = session.NewManager("memory", "gosessionid", 3600)
+	go globalSessions.GC()
+
 	//目录设置
-	fileServer := http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
-	http.Handle("/static/", fileServer)
-	fileServer = http.StripPrefix("/html/", http.FileServer(http.Dir("html")))
-	http.Handle("/html/", fileServer)
+	//fileServer := http.StripPrefix("/static", http.FileServer(http.Dir("/Users/wangchao/go/src/webapp/static")))
+	//http.Handle("/static/", fileServer)
+	// 静态文件 os 绝对路径
+	// wd, _ := os.Getwd() // 当前路径
+	// fmt.Println(wd)
+
+	http.Handle("/html/", http.StripPrefix("/html", http.FileServer(http.Dir("."))))
 	//路由设置
 	http.HandleFunc("/post", makeHandler(postHandler))
 	http.HandleFunc("/edit", makeHandler(editHandler))
@@ -47,12 +62,29 @@ func main() {
 
 func makeHandler(fn func(http.ResponseWriter, *http.Request)) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// c, _ := r.Cookie("uid")
+		// name, _ := r.Cookie("username")
+		// if c != nil {
+		// 	fmt.Println("login uid", c, name)
+		// }
+
+		// sess := globalSessions.SessionStart(w, r)
+		// fmt.Println("sess uid", sess.Get("uid"))
+
 		fn(w, r)
 	}
 }
 
 //发布
 func publishHandler(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
+	login_uid, _ := strconv.Atoi(fmt.Sprintf("%s", sess.Get("uid")))
+
+	if login_uid == 0 {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
 	if r.Method == "GET" {
 		//模板應用
 		t, _ := template.ParseFiles("html/publish.html")
@@ -84,17 +116,18 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//db
-		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 		checkErr(err)
 		//插入數據
-		stmt, err := db.Prepare("INSERT posts SET title=?, content=?, create_time=?")
+		stmt, err := db.Prepare("INSERT posts SET uid=?, title=?, content=?, create_time=?")
 		checkErr(err)
-		res, err := stmt.Exec(title, content, create_time)
+		res, err := stmt.Exec(login_uid, title, content, create_time)
 		checkErr(err)
 		id, err := res.LastInsertId()
 		checkErr(err)
-		fmt.Printf("Insert Id: %d\n", id)
+		//fmt.Printf("Insert Id: %d\n", id)
 		http.Redirect(w, r, "/posts", 302)
+		return
 	}
 }
 
@@ -104,6 +137,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request form data", 400)
 		return
 	}
+
 	limit := 5
 	p, _ := strconv.Atoi(r.Form.Get("page"))
 	if p == 0 {
@@ -112,7 +146,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	start := limit * (p - 1)
 
 	//db
-	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢數據
 	rows, err := db.Query("select id, title, content, create_time from posts where parent_id=0 order by id desc limit ?, ?", start, limit)
@@ -175,7 +209,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var data Page
 	//db
-	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢POST數據
 	err = db.QueryRow("select id, title, content, create_time from posts where id=?", post_id).Scan(&id, &title, &content, &create_time)
@@ -183,6 +217,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	case err == sql.ErrNoRows:
 		log.Printf("No user with that ID.")
 		http.NotFound(w, r)
+		return
 	case err != nil:
 		log.Fatal(err)
 	default:
@@ -208,6 +243,14 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 
 //编辑
 func editHandler(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
+	login_uid, _ := strconv.Atoi(fmt.Sprintf("%s", sess.Get("uid")))
+
+	if login_uid == 0 {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Invalid request form data", 400)
 		return
@@ -222,6 +265,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 
 		var (
 			id      int
+			uid     int
 			title   string
 			content string
 		)
@@ -231,17 +275,24 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 			Content string
 		}
 		//db
-		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 		defer db.Close()
 		//查詢數據
-		err = db.QueryRow("select id, title, content from posts where id=?", post_id).Scan(&id, &title, &content)
+		err = db.QueryRow("select id, uid, title, content from posts where id=?", post_id).Scan(&id, &uid, &title, &content)
 		switch {
 		case err == sql.ErrNoRows:
 			log.Printf("No user with that ID.")
 			http.NotFound(w, r)
+			return
 		case err != nil:
 			log.Fatal(err)
 		default:
+			//fmt.Println(uid, login_uid)
+			if login_uid != uid {
+				http.Error(w, "没有编辑权限", 400)
+				return
+			}
+
 			data := &Data{Id: id, Title: title, Content: content}
 			//模板應用
 			t, _ := template.ParseFiles("html/edit.html")
@@ -268,20 +319,22 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		//db
-		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 		checkErr(err)
 		defer db.Close()
 		//插入數據
-		stmt, err := db.Prepare("update posts SET title=?, content=?, update_time=? where id=?")
+		stmt, err := db.Prepare("update posts SET title=?, content=?, update_time=? where id=? and uid=?")
 		checkErr(err)
-		res, err := stmt.Exec(title, content, update_time, id)
+		res, err := stmt.Exec(title, content, update_time, id, login_uid)
 		checkErr(err)
 		affect, err := res.RowsAffected()
 		checkErr(err)
 		if affect > 0 {
 			http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), 302)
+			return
 		} else {
-			http.Error(w, "affect", http.StatusForbidden)
+			http.Error(w, "编辑失败", http.StatusForbidden)
+			return
 		}
 
 	}
@@ -289,6 +342,14 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 
 //回复
 func replyHandler(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
+	login_uid, _ := strconv.Atoi(fmt.Sprintf("%s", sess.Get("uid")))
+
+	if login_uid == 0 {
+		http.Error(w, "账号未登录", http.StatusForbidden)
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Invalid request form data", 400)
 		return
@@ -303,22 +364,22 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(reply_content) == 0 {
-		http.Error(w, "回复内存为空", http.StatusForbidden)
+		http.Error(w, "请输入回复内容", http.StatusForbidden)
 		return
 	}
 	//db
-	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(127.0.0.1:3306)/webapp?charset=utf8")
+	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 	checkErr(err)
 	defer db.Close()
 	//插入數據
-	insetReply, err := db.Prepare("INSERT posts SET parent_id=?, content=?, create_time=?")
+	insetReply, err := db.Prepare("INSERT posts SET parent_id=?, uid=?, content=?, create_time=?")
 	checkErr(err)
 	//更新post replies
 	updatePost, err := db.Prepare("update posts set replies = replies + 1, last_reply_time = ? where id = ?")
 	checkErr(err)
 	//开启事务
 	tx, err := db.Begin()
-	_, err = tx.Stmt(insetReply).Exec(reply_id, reply_content, create_time)
+	_, err = tx.Stmt(insetReply).Exec(reply_id, login_uid, reply_content, create_time)
 	if err != nil {
 		fmt.Println("err sql insert reply")
 	} else {
@@ -332,8 +393,44 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		tx.Rollback()
 		http.Error(w, "事务失败", http.StatusForbidden)
+		return
 	}
 	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), 302)
+	return
+}
+
+const (
+	UsernameMinLen int = 3
+	UsernameMaxLen int = 16
+)
+
+var (
+	UsernameRegexp = regexp.MustCompile(`\A[a-z0-9\-_]{3,16}\z`)
+)
+var (
+	ErrUsernameTooShort = errors.New(`Username is too short`)
+	ErrUsernameTooLong  = errors.New(`Username is too long`)
+	ErrUsernameInvalid  = errors.New(`Username is not valid`)
+)
+
+type Username string
+
+func CheckUsername(uname string) error {
+	unameLen := len(uname)
+
+	if unameLen < UsernameMinLen {
+		return ErrUsernameTooShort
+	}
+
+	if unameLen > UsernameMaxLen {
+		return ErrUsernameTooLong
+	}
+
+	if !UsernameRegexp.MatchString(uname) {
+		return ErrUsernameInvalid
+	}
+
+	return nil
 }
 
 func regHandler(w http.ResponseWriter, r *http.Request) {
@@ -342,24 +439,88 @@ func regHandler(w http.ResponseWriter, r *http.Request) {
 		t, _ := template.ParseFiles("html/reg.html")
 		t.Execute(w, nil)
 	} else {
-		if err := r.ParseForm(); err != nil {
-			http.Error(w, "Invalid request form data", 400)
+		r.ParseForm()
+
+		username := r.FormValue("username")
+		password := []byte(strings.TrimSpace(r.FormValue("password")))
+
+		if err := CheckUsername(username); err != nil {
+			http.Error(w, fmt.Sprintf("%s", err), http.StatusForbidden)
 			return
 		}
 
-		username := strings.TrimSpace(r.FormValue("username"))
-		password := strings.TrimSpace(r.FormValue("password"))
-		if username == "" || password == "" {
+		if len(password) == 0 {
 			http.Error(w, "用户名密码不能为空", http.StatusForbidden)
 			return
 		}
 		username = strings.ToLower(username)
+		passwd_encode := fmt.Sprintf("%x", md5.Sum(password))
+		//db
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
+		checkErr(err)
+		defer db.Close()
 		//查询用户名
+		var uid int
+		err = db.QueryRow("select uid from users where username=?", username).Scan(&uid)
+		if err != sql.ErrNoRows || uid > 0 {
+			http.Error(w, "该用户名已存在", http.StatusForbidden)
+			return
+		}
+
+		reg_time := time.Now().Unix()
+		//创建用户
+		stmt, err := db.Prepare("INSERT INTO users (`username`, `password`, `reg_time`) value (?,?,?)")
+		checkErr(err)
+		defer stmt.Close()
+		res, err := stmt.Exec(username, passwd_encode, reg_time)
+		checkErr(err)
+		new_uid, err := res.LastInsertId()
+		checkErr(err)
+		fmt.Printf("Insert Uid: %d\n", new_uid)
+		http.Redirect(w, r, "/login", 302)
+		return
 	}
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		//模板應用
+		t, _ := template.ParseFiles("html/login.html")
+		t.Execute(w, nil)
+	} else {
+		sess := globalSessions.SessionStart(w, r)
+		r.ParseForm()
+		username := strings.TrimSpace(r.FormValue("username"))
+		password := []byte(strings.TrimSpace(r.FormValue("password")))
 
+		if len(username) == 0 || len(password) == 0 {
+			http.Error(w, "账号密码不能为空", http.StatusForbidden)
+			return
+		}
+		username = strings.ToLower(username)
+		passwd_encode := fmt.Sprintf("%x", md5.Sum(password))
+		//db
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
+		checkErr(err)
+		defer db.Close()
+		//查询用户名
+		var uid int
+		err = db.QueryRow("select uid from users where username=? and password=?", username, passwd_encode).Scan(&uid)
+		if err != nil || err == sql.ErrNoRows {
+			http.Error(w, "账号错误", http.StatusForbidden)
+			return
+		}
+		//登录
+		//fmt.Sprintln("login uid: %d", uid)
+		//fmt.Println(uid)
+		//set cookie
+		expiration := time.Now().AddDate(0, 0, 1)
+		cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Expires: expiration}
+		http.SetCookie(w, &cookie)
+		sess.Set("uid", strconv.Itoa(uid))
+		http.Redirect(w, r, "/posts", 302)
+		return
+	}
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
