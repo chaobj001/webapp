@@ -119,9 +119,9 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 		checkErr(err)
 		//插入數據
-		stmt, err := db.Prepare("INSERT posts SET uid=?, title=?, content=?, create_time=?")
+		stmt, err := db.Prepare("INSERT posts SET uid=?, title=?, content=?, create_time=?, last_reply_time=?")
 		checkErr(err)
-		res, err := stmt.Exec(login_uid, title, content, create_time)
+		res, err := stmt.Exec(login_uid, title, content, create_time, create_time)
 		checkErr(err)
 		id, err := res.LastInsertId()
 		checkErr(err)
@@ -130,7 +130,7 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "create content error", http.StatusForbidden)
 		}
-		
+
 		return
 	}
 }
@@ -153,7 +153,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
 	checkErr(err)
 	//查詢數據
-	rows, err := db.Query("select id, title, content, create_time from posts where parent_id=0 order by id desc limit ?, ?", start, limit)
+	rows, err := db.Query("select id, title, content, create_time from posts where parent_id=0 order by last_reply_time desc limit ?, ?", start, limit)
 	checkErr(err)
 	defer rows.Close()
 	type Page struct {
@@ -228,7 +228,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		data.Post = &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownCommon([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
 	}
 	//查詢reply數據
-	replies, err := db.Query("select id, content, create_time from posts where parent_id=? order by id desc limit ?, ?", post_id, 0, 20)
+	replies, err := db.Query("select id, content, create_time from posts where parent_id=? order by id ASC limit ?, ?", post_id, 0, 20)
 	checkErr(err)
 	defer replies.Close()
 	for replies.Next() {
@@ -350,7 +350,8 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 	login_uid, _ := strconv.Atoi(fmt.Sprintf("%s", sess.Get("uid")))
 
 	if login_uid == 0 {
-		http.Error(w, "账号未登录", http.StatusForbidden)
+		//http.Error(w, "账号未登录", http.StatusForbidden)
+		http.Redirect(w, r, "/login", 302)
 		return
 	}
 
@@ -379,7 +380,7 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 	insetReply, err := db.Prepare("INSERT posts SET parent_id=?, uid=?, content=?, create_time=?")
 	checkErr(err)
 	//更新post replies
-	updatePost, err := db.Prepare("update posts set replies = replies + 1, last_reply_time = ? where id = ?")
+	updatePost, err := db.Prepare("update posts set replies = replies + 1, last_reply_time = ?, last_reply_uid = ? where id = ?")
 	checkErr(err)
 	//开启事务
 	tx, err := db.Begin()
@@ -387,7 +388,7 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println("err sql insert reply")
 	} else {
-		_, err = tx.Stmt(updatePost).Exec(create_time, reply_id)
+		_, err = tx.Stmt(updatePost).Exec(create_time, login_uid, reply_id)
 		if err != nil {
 			fmt.Println("err sql update post by reply")
 		} else {
@@ -514,9 +515,13 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "账号错误", http.StatusForbidden)
 			return
 		}
-		//登录
-		//fmt.Sprintln("login uid: %d", uid)
-		//fmt.Println(uid)
+
+		//update user info
+		stmt, err := db.Prepare("update users SET login_times = login_times + 1, login_time=? where uid=?")
+		checkErr(err)
+		_, err = stmt.Exec(time.Now().Unix(), uid)
+		checkErr(err)
+
 		//set cookie
 		expiration := time.Now().AddDate(0, 0, 1)
 		cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Expires: expiration}
