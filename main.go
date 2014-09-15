@@ -125,8 +125,12 @@ func publishHandler(w http.ResponseWriter, r *http.Request) {
 		checkErr(err)
 		id, err := res.LastInsertId()
 		checkErr(err)
-		//fmt.Printf("Insert Id: %d\n", id)
-		http.Redirect(w, r, "/posts", 302)
+		if id > 0 {
+			http.Redirect(w, r, "/posts", 302)
+		} else {
+			http.Error(w, "create content error", http.StatusForbidden)
+		}
+		
 		return
 	}
 }
