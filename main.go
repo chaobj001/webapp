@@ -34,7 +34,7 @@ type Post struct {
 
 func main() {
 	//配置sessions
-	globalSessions, _ = session.NewManager("memory", "gosessionid", 3600)
+	globalSessions, _ = session.NewManager("memory", "gosessionid", 7200)
 	go globalSessions.GC()
 
 	//目录设置
@@ -191,6 +191,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 
 //post详情
 func postHandler(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Invalid request form data", 400)
 		return
@@ -243,6 +244,20 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	//模板應用
 	t, _ := template.ParseFiles("html/post.html")
 	t.Execute(w, data)
+
+	//浏览数update
+	view_key := fmt.Sprintf("post_views:%d", post_id)
+	if is_viewed := sess.Get(view_key); is_viewed == nil {
+		stmt, err := db.Prepare("update posts SET views=views+1 where id=?")
+		checkErr(err)
+		res, err := stmt.Exec(post_id)
+		checkErr(err)
+		affect, err := res.RowsAffected()
+		checkErr(err)
+		if affect > 0 {
+			sess.Set(view_key, true)
+		}
+	}
 }
 
 //编辑
@@ -524,7 +539,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		//set cookie
 		expiration := time.Now().AddDate(0, 0, 1)
-		cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Expires: expiration}
+		cookie := http.Cookie{Name: "uid", Value: strconv.Itoa(uid), Path: "/", HttpOnly: true, Expires: expiration}
 		http.SetCookie(w, &cookie)
 		sess.Set("uid", strconv.Itoa(uid))
 		http.Redirect(w, r, "/posts", 302)
