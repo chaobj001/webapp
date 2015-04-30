@@ -40,6 +40,8 @@ func main() {
 	//目录设置
 	//fileServer := http.StripPrefix("/static", http.FileServer(http.Dir("/Users/wangchao/go/src/webapp/static")))
 	//http.Handle("/static/", fileServer)
+	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("."))))
+
 	// 静态文件 os 绝对路径
 	// wd, _ := os.Getwd() // 当前路径
 	// fmt.Println(wd)
