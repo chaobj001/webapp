@@ -4,16 +4,29 @@
         <title>TODO supply a title</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/github-markdown.css" />
+        <link rel="stylesheet" href="/static/hljs-github.min.css" />
+        <style>
+      body {
+        min-width: 200px;
+        margin: 0 auto;
+        padding: 30px;
+      }
+    </style> 
     </head>
     <body>
         <a href="/publish">發佈</a>
-        <ul>
+
             {{with .Posts}}
                 {{range .}}
-                <li><a href="/post?post_id={{.Id}}">{{.Title}}</a></li>
+                <content>
+                    <p><a href="/post?post_id={{.Id}}">{{.Title}}</a></p>
+                    <article class="markdown-body">{{.Content}}</article>
+                    <p><a href="/post?post_id={{.Id}}">{{.Date}}</a></p>
+                </content>
                 {{end}}
             {{end}}
-        </ul>
         {{.PageNav}}
     </body>
 </html>
