@@ -1,33 +1,38 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>publish</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/editor.css" />
+        <script type="text/javascript" src="/static/marked.js"></script>
+        <script type="text/javascript" src="/static/editor.js"></script>
+        <style type="text/css">
+      body {
+        padding: 0;
+        margin: 0;
+        background-color: #f9f9f7;
+      }
+      .editor-wrapper {
+        max-width: 800px;
+        padding: 10px;
+        margin: 60px auto;
+      }
+    </style>
     </head>
     <body>
         <form action="/publish?time=1111" method="POST">
-        	<table>
-        		<thead>
-        			<tr>
-        				<th colspan="2">內容發佈</th>
-        			</tr>
-        		</thead>
-        		<tbody>
-	        		<tr>
-	        			<th>title</th>
-	        			<td><input type="text" name="title" /></td>
-	        		</tr>
-	        		<tr>
-	        			<th>content</th>
-	        			<td><textarea name="content"></textarea></td>
-	        		</tr>
-	        		<tr>
-	        			<th></th>
-	        			<td><button type="submit">提交</button></td>
-	        		</tr>
-        		</tbody>
-        	</table>
+            <div class="editor-wrapper">
+              <input class="title" type="text" name="title" placeholder="Title" />
+              <textarea id="editor" name="content" placeholder="Content here ...."></textarea>
+            </div>
+            <button type="submit">提交</button>
         </form>
+
+    <script type="text/javascript">
+      var editor = new Editor();
+      editor.render();
+    </script>
     </body>
 </html>
