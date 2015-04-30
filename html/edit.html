@@ -25,7 +25,7 @@
     <body>
         <form action="/edit" method="POST">
             <div class="editor-wrapper">
-              <input class="title" type="text" name="{{.Title}}" />
+              <input class="title" type="text" name="title" value="{{.Title}}" />
               <textarea id="editor" name="content">{{.Content}}</textarea>
             </div>
             <input type="hidden" value="{{.Id}}" name="id" />
