@@ -18,7 +18,7 @@
         <div class="container">
                 <p><a href="/posts">Back lists</a></p>
                 {{with .Post}}
-                    <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
+                    <h2>{{.Title}}<a href="/edit?post_id={{.Id}}"><small>edit</small></a></h2>
                     <article class="markdown-body">{{.Content}}</article>
                     <p>{{.Date}}</p>
                 {{end}}
