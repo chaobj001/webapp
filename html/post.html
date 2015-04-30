@@ -15,26 +15,26 @@
               <h2>陌上花</h2>
             </div>
         </header>
-<div class="container">
-        <p><a href="/posts">Back lists</a></p>
-        {{with .Post}}
-            <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
-            <article class="markdown-body">{{.Content}}</article>
-            <p>{{.Date}}</p>
-        {{end}}
-        <ul>
-            {{with .Replies}}
-                {{range .}}
-                <li>{{.Date}} {{.Content}}</li>
+        <div class="container">
+                <p><a href="/posts">Back lists</a></p>
+                {{with .Post}}
+                    <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
+                    <article class="markdown-body">{{.Content}}</article>
+                    <p>{{.Date}}</p>
                 {{end}}
-            {{end}}
-        </ul>
-        <form method="post" action="/reply">
-            <textarea name="content" class="textfield input-block"></textarea>
-            <button class="btn btn-sm btn-outline" type="submit">回复</button>
-            <input type="hidden" name="id" value="{{.Post.Id}}" />
-        </form>
-</div>
+                <ul>
+                    {{with .Replies}}
+                        {{range .}}
+                        <li>{{.Date}} {{.Content}}</li>
+                        {{end}}
+                    {{end}}
+                </ul>
+                <form method="post" action="/reply">
+                    <textarea name="content" class="textfield input-block"></textarea>
+                    <button class="btn btn-sm btn-outline" type="submit">回复</button>
+                    <input type="hidden" name="id" value="{{.Post.Id}}" />
+                </form>
+        </div>
 
 
     </body>
