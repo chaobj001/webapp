@@ -17,6 +17,12 @@
     </style>
     </head>
     <body>
+        <header class="swatch-blue">
+            <div class="container">
+              Lab
+            </div>
+        </header>
+<div class="container">
         <p><a href="/posts">Back lists</a></p>
         {{with .Post}}
             <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
@@ -35,5 +41,8 @@
             <button class="btn btn-sm btn-outline" type="submit">回复</button>
             <input type="hidden" name="id" value="{{.Post.Id}}" />
         </form>
+</div>
+
+
     </body>
 </html>

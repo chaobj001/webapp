@@ -9,27 +9,20 @@
         <link rel="stylesheet" href="/static/editor.css" />
         <script type="text/javascript" src="/static/marked.js"></script>
         <script type="text/javascript" src="/static/editor.js"></script>
-        <style type="text/css">
-      body {
-        padding: 0;
-        margin: 0;
-        background-color: #f9f9f7;
-      }
-      .editor-wrapper {
-        max-width: 800px;
-        padding: 10px;
-        margin: 60px auto;
-      }
-    </style>
+
     </head>
     <body>
-        <form action="/publish?time=1111" method="POST">
-            <div class="editor-wrapper">
-              <input class="title" type="text" name="title" placeholder="Title" />
-              <textarea id="editor" name="content" placeholder="Content here ...."></textarea>
-            </div>
-            <button class="btn btn-primary" type="submit">提交</button>
-        </form>
+  <div class="container">
+          <form action="/publish?time=1111" method="POST">
+              <div class="editor-wrapper">
+                <input class="title" type="text" name="title" placeholder="Title" />
+                <textarea id="editor" name="content" placeholder="Content here ...."></textarea>
+              </div>
+              <button class="btn btn-primary" type="submit">提交</button>
+          </form>
+  </div>
+      
+
 
     <!-- only required for loading sample markdown into the textarea -->
     <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
