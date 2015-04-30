@@ -577,7 +577,7 @@ func (p *PageNav) getPage() interface{} {
 	for i := 1; i <= pages; i++ {
 		//fmt.Println(i)
 		j := strconv.Itoa(i)
-		html += "<a href=\"" + p.url + j + "\">" + j + "</a>"
+		html += "<a class="btn btn-outline" href=\"" + p.url + j + "\">" + j + "</a>"
 	}
 	return template.HTML(html)
 }

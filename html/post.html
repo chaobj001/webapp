@@ -1,25 +1,18 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>{{.Title}} - 陌上花</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/static/standard.css" />
         <link rel="stylesheet" href="/static/primer.css" />
         <link rel="stylesheet" href="/static/github-markdown.css" />
         <link rel="stylesheet" href="/static/hljs-github.min.css" />
-        <style>
-      body {
-        min-width: 200px;
-        margin: 0 auto;
-        padding: 30px;
-      }
-    </style>
     </head>
     <body>
         <header class="swatch-blue">
             <div class="container">
-              Lab
+              <h2>陌上花</h2>
             </div>
         </header>
 <div class="container">
@@ -37,7 +30,7 @@
             {{end}}
         </ul>
         <form method="post" action="/reply">
-            <textarea name="content" class="textfield"></textarea>
+            <textarea name="content" class="textfield input-block"></textarea>
             <button class="btn btn-sm btn-outline" type="submit">回复</button>
             <input type="hidden" name="id" value="{{.Post.Id}}" />
         </form>

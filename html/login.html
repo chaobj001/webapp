@@ -1,33 +1,43 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>login</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/primer.css" />
     </head>
     <body>
+        <header class="swatch-blue">
+            <div class="container">
+              <h2>陌上花</h2>
+            </div>
+        </header>
+        <div class="container">
         <form action="/login" method="POST">
-        	<table>
-        		<thead>
-        			<tr>
-        				<th colspan="2">账号登录</th>
-        			</tr>
-        		</thead>
-        		<tbody>
-	        		<tr>
-	        			<th>Username</th>
-	        			<td><input type="text" name="username" /></td>
-	        		</tr>
-	        		<tr>
-	        			<th>Password</th>
-	        			<td><input type="password" name="password" /></td>
-	        		</tr>
-	        		<tr>
-	        			<th></th>
-	        			<td><button type="submit">登录</button></td>
-	        		</tr>
-        		</tbody>
-        	</table>
+            <table>
+                <thead>
+                    <tr>
+                        <th colspan="2">账号登录</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>Username</th>
+                        <td><input type="text" name="username" /></td>
+                    </tr>
+                    <tr>
+                        <th>Password</th>
+                        <td><input type="password" name="password" /></td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <td><button type="submit">登录</button></td>
+                    </tr>
+                </tbody>
+            </table>
         </form>
+        </div>
+
     </body>
 </html>

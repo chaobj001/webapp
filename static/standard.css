@@ -425,3 +425,12 @@ td,
 th {
   padding: 0;
 }
+
+header{
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+.swatch-blue {
+  background-color: #4183c4;
+  color: #FFF;
+}
