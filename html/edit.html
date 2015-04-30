@@ -1,36 +1,45 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>TODO supply a title</title>
+        <title>编辑</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/editor.css" />
+        <script type="text/javascript" src="/static/marked.js"></script>
+        <script type="text/javascript" src="/static/editor.js"></script>
+        <style type="text/css">
+      body {
+        padding: 0;
+        margin: 0;
+        background-color: #f9f9f7;
+      }
+      .editor-wrapper {
+        max-width: 800px;
+        padding: 10px;
+        margin: 60px auto;
+      }
+    </style>
+
     </head>
     <body>
         <form action="/edit" method="POST">
-        	<table>
-        		<thead>
-        			<tr>
-        				<th colspan="2">內容編輯</th>
-        			</tr>
-        		</thead>
-        		<tbody>
-	        		<tr>
-	        			<th>title</th>
-	        			<td><input type="text" name="title" value="{{.Title}}" /></td>
-	        		</tr>
-	        		<tr>
-	        			<th>content</th>
-	        			<td><textarea name="content">{{.Content}}</textarea></td>
-	        		</tr>
-	        		<tr>
-	        			<th></th>
-	        			<td>
-                            <input type="hidden" value="{{.Id}}" name="id" />
-                            <button type="submit">save</button>
-                        </td>
-	        		</tr>
-        		</tbody>
-        	</table>
+            <div class="editor-wrapper">
+              <input class="title" type="text" name="{{.Title}}" />
+              <textarea id="editor" name="content">{{.Content}}</textarea>
+            </div>
+            <input type="hidden" value="{{.Id}}" name="id" />
+            <button type="submit">保存</button>
         </form>
+
+    <!-- only required for loading sample markdown into the textarea -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript">
+    (function(){
+          var editor = new Editor();
+          editor.render();
+
+    })();
+    </script>
     </body>
 </html>
