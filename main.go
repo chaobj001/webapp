@@ -48,6 +48,7 @@ func main() {
 
 	//http.Handle("/html/", http.StripPrefix("/html", http.FileServer(http.Dir("."))))
 	//路由设置
+	http.HandleFunc("/", makeHandler(postsHandler))
 	http.HandleFunc("/post", makeHandler(postHandler))
 	http.HandleFunc("/edit", makeHandler(editHandler))
 	http.HandleFunc("/posts", makeHandler(postsHandler))
