@@ -17,13 +17,23 @@
     </style> 
     </head>
     <body>
-        
-          <div class="columns">
-            <div class="one-third column">
-                <a class="btn btn-outline" href="/publish">發佈</a>
+        <header>
+            <div class="container">
+              Lab
             </div>
-            <div class="two-thirds column">
-              
+        </header>
+        <div class="container">
+
+          <div class="columns">
+            <div class="one-fourth column">
+                <nav class="menu">
+                  <a class="menu-item selected" href="/publish">發佈</a>
+                  <a class="menu-item" href="#">Profile</a>
+                  <a class="menu-item" href="#">Emails</a>
+                  <a class="menu-item" href="#">Notifications</a>
+                </nav>
+            </div>
+            <div class="three-fourths column">
                 {{with .Posts}}
                     {{range .}}
                     <content>
@@ -33,13 +43,15 @@
                     </content>
                     {{end}}
                 {{end}}
-
             </div>
           </div>
 
-
-
-
-        {{.PageNav}}
+            <div class="columns">
+              <div class="one-half column centered">
+                {{.PageNav}}
+              </div>
+            </div>
+        
+        </div>
     </body>
 </html>
