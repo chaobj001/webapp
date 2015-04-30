@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/primer.css" />
         <link rel="stylesheet" href="/static/github-markdown.css" />
         <link rel="stylesheet" href="/static/hljs-github.min.css" />
         <style>
@@ -16,17 +17,29 @@
     </style> 
     </head>
     <body>
-        <a href="/publish">發佈</a>
-
-            {{with .Posts}}
-                {{range .}}
-                <content>
-                    <p><a href="/post?post_id={{.Id}}">{{.Title}}</a></p>
-                    <article class="markdown-body">{{.Content}}</article>
-                    <p><a href="/post?post_id={{.Id}}">{{.Date}}</a></p>
-                </content>
+        
+          <div class="columns">
+            <div class="one-third column">
+                <a class="btn btn-outline" href="/publish">發佈</a>
+            </div>
+            <div class="two-thirds column">
+              
+                {{with .Posts}}
+                    {{range .}}
+                    <content>
+                        <h3><a href="/post?post_id={{.Id}}">{{.Title}}</a></h3>
+                        <article class="markdown-body">{{.Content}}</article>
+                        <p><a href="/post?post_id={{.Id}}">{{.Date}}</a></p>
+                    </content>
+                    {{end}}
                 {{end}}
-            {{end}}
+
+            </div>
+          </div>
+
+
+
+
         {{.PageNav}}
     </body>
 </html>

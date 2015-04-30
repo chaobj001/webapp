@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/primer.css" />
         <link rel="stylesheet" href="/static/editor.css" />
         <script type="text/javascript" src="/static/marked.js"></script>
         <script type="text/javascript" src="/static/editor.js"></script>
@@ -29,7 +30,7 @@
               <textarea id="editor" name="content">{{.Content}}</textarea>
             </div>
             <input type="hidden" value="{{.Id}}" name="id" />
-            <button type="submit">保存</button>
+            <button class="btn btn-primary" type="submit">保存</button>
         </form>
 
     <!-- only required for loading sample markdown into the textarea -->

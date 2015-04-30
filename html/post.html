@@ -5,6 +5,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/primer.css" />
         <link rel="stylesheet" href="/static/github-markdown.css" />
         <link rel="stylesheet" href="/static/hljs-github.min.css" />
         <style>
@@ -30,9 +31,8 @@
             {{end}}
         </ul>
         <form method="post" action="/reply">
-            
-            <textarea name="content"></textarea>
-            <button type="submit">回复</button>
+            <textarea name="content" class="textfield"></textarea>
+            <button class="btn btn-sm btn-outline" type="submit">回复</button>
             <input type="hidden" name="id" value="{{.Post.Id}}" />
         </form>
     </body>
