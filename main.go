@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/Go-SQL-Driver/MySQL"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/russross/blackfriday"
 	"html/template"
 	"log"
@@ -172,7 +173,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&id, &title, &content, &create_time); err != nil {
 			log.Fatal(err)
 		}
-		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownBasic([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04")})
+		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: bluemonday.UGCPolicy().SanitizeBytes(blackfriday.MarkdownCommon([]byte(content))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04")})
 	}
 
 	//獲取總條數
