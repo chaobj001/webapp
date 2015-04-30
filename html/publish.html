@@ -30,12 +30,14 @@
             <button type="submit">提交</button>
         </form>
 
+    <!-- only required for loading sample markdown into the textarea -->
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
     <script type="text/javascript">
+    (function(){
+          var editor = new Editor();
+          editor.render();
 
-    window.load = function(){
-      var editor = new Editor();
-      editor.render(); 
-    };
+    })();
     </script>
     </body>
 </html>
