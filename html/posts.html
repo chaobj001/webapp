@@ -28,19 +28,21 @@
             <div class="three-fourths column">
                 {{with .Posts}}
                     {{range .}}
-                    <content>
-                        <h3><a href="/post?post_id={{.Id}}">{{.Title}}</a></h3>
+                    <content style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid #eee;">
+                        <h3><a style="color:#333;" href="/post?post_id={{.Id}}">{{.Title}}</a></h3>
                         <article class="markdown-body">{{.Content}}</article>
-                        <p><a href="/post?post_id={{.Id}}">{{.Date}}</a></p>
+                        <p class="note"><small>{{.Date}}</small></p>
                     </content>
                     {{end}}
                 {{end}}
+
+                 <div style="margin:20px 0;" class="btn-group">
+                    {{.PageNav}}
+                  </div>
             </div>
           </div>
 
-              <div class="btn-group">
-                {{.PageNav}}
-              </div>
+ 
         
         </div>
     </body>

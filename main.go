@@ -172,7 +172,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&id, &title, &content, &create_time); err != nil {
 			log.Fatal(err)
 		}
-		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownCommon([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")})
+		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownCommon([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04")})
 	}
 
 	//獲取總條數

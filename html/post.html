@@ -31,8 +31,12 @@
                 </ul>
                 <form method="post" action="/reply">
                     <textarea name="content" class="textfield input-block"></textarea>
-                    <button class="btn btn-sm btn-outline" type="submit">回复</button>
                     <input type="hidden" name="id" value="{{.Post.Id}}" />
+                    <div class="clearfix">
+                        <button class="right btn btn-sm btn-outline" type="submit">回复</button>
+                    </div>
+                    
+                    
                 </form>
         </div>
 
