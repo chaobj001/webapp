@@ -28,8 +28,8 @@
             <div class="three-fourths column">
                 {{with .Posts}}
                     {{range .}}
-                    <div style="margin-bottom:30px; padding-bottom:7px; border-bottom:1px solid #eee;">
-                        <h2><a style="font-weight:normal;" href="/post?post_id={{.Id}}">{{.Title}}</a></h2>
+                    <div style="margin-bottom:30px; padding-bottom:7px; ">
+                        <h2 style="margin-bottom:10px; border-bottom:1px solid #eee;"><a style="font-weight:normal;" href="/post?post_id={{.Id}}">{{.Title}}</a></h2>
                         <article class="markdown-body">{{.Content}}</article>
                         <div class="note"><small>{{.Date}}</small></div>
                     </div>
