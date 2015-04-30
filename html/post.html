@@ -5,12 +5,21 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link rel="stylesheet" href="/static/standard.css" />
+        <link rel="stylesheet" href="/static/github-markdown.css" />
+        <link rel="stylesheet" href="/static/hljs-github.min.css" />
+        <style>
+      body {
+        min-width: 200px;
+        margin: 0 auto;
+        padding: 30px;
+      }
+    </style>
     </head>
     <body>
         <p><a href="/posts">Back lists</a></p>
         {{with .Post}}
             <h2>{{.Title}}<a href="/edit?post_id={{.Id}}">edit</a></h2>
-            <div class="standard">{{.Content}}</div>
+            <article class="markdown-body">{{.Content}}</article>
             <p>{{.Date}}</p>
         {{end}}
         <ul>
