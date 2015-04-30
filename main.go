@@ -40,13 +40,13 @@ func main() {
 	//目录设置
 	//fileServer := http.StripPrefix("/static", http.FileServer(http.Dir("/Users/wangchao/go/src/webapp/static")))
 	//http.Handle("/static/", fileServer)
-	http.Handle("/static/", http.StripPrefix("/static", http.FileServer(http.Dir("."))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	// 静态文件 os 绝对路径
 	// wd, _ := os.Getwd() // 当前路径
 	// fmt.Println(wd)
 
-	http.Handle("/html/", http.StripPrefix("/html", http.FileServer(http.Dir("."))))
+	//http.Handle("/html/", http.StripPrefix("/html", http.FileServer(http.Dir("."))))
 	//路由设置
 	http.HandleFunc("/post", makeHandler(postHandler))
 	http.HandleFunc("/edit", makeHandler(editHandler))
