@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/Go-SQL-Driver/MySQL"
-	"github.com/microcosm-cc/bluemonday"
-	"github.com/russross/blackfriday"
+	//"github.com/microcosm-cc/bluemonday"
+	//"github.com/russross/blackfriday"
+	"github.com/shurcooL/go/github_flavored_markdown"
 	"html/template"
 	"log"
 	"math"
@@ -173,7 +174,8 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 		if err := rows.Scan(&id, &title, &content, &create_time); err != nil {
 			log.Fatal(err)
 		}
-		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: bluemonday.UGCPolicy().SanitizeBytes(blackfriday.MarkdownCommon([]byte(content))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04")})
+		cnt := template.HTML(string(github_flavored_markdown.Markdown([]byte(content))))
+		data.Posts = append(data.Posts, &Post{Id: id, Title: title, Content: cnt, Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04")})
 	}
 
 	//獲取總條數
@@ -230,7 +232,9 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		log.Fatal(err)
 	default:
-		data.Post = &Post{Id: id, Title: title, Content: template.HTML(string(blackfriday.MarkdownCommon([]byte(content)))), Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
+		cnt := template.HTML(string(github_flavored_markdown.Markdown([]byte(content))))
+		//template.HTML(string(blackfriday.MarkdownCommon([]byte(content))))
+		data.Post = &Post{Id: id, Title: title, Content: cnt, Date: time.Unix(int64(create_time), 0).Format("2006-01-02 15:04:05")}
 	}
 	//查詢reply數據
 	replies, err := db.Query("select id, content, create_time from posts where parent_id=? order by id ASC limit ?, ?", post_id, 0, 20)
