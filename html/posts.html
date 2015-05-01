@@ -29,7 +29,7 @@
                 {{with .Posts}}
                     {{range .}}
                     <div style="margin-bottom:30px; padding-bottom:5px; border-bottom:1px solid #eee;">
-                        <h2><a style="font-weight:normal;" href="/post?post_id={{.Id}}">{{.Title}}</a></h2>
+                        <h2><a style="font-weight:normal;" href="/post?id={{.Id}}">{{.Title}}</a></h2>
                         <article class="markdown-body">{{.Content}}</article>
                         <div class="note clearfix"><small class="right">{{.Date}}</small></div>
                     </div>
