@@ -59,6 +59,7 @@ func main() {
 	http.HandleFunc("/reg", makeHandler(regHandler))
 	http.HandleFunc("/login", makeHandler(loginHandler))
 	http.HandleFunc("/logout", makeHandler(logoutHandler))
+	http.HandleFunc("/remove", makeHandler(removeHandler))
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
@@ -364,6 +365,49 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+	}
+}
+
+//删除
+func removeHandler(w http.ResponseWriter, r *http.Request) {
+	sess := globalSessions.SessionStart(w, r)
+	login_uid, _ := strconv.Atoi(fmt.Sprintf("%s", sess.Get("uid")))
+
+	if login_uid == 0 {
+		http.Redirect(w, r, "/login", 302)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Invalid request form data", 400)
+		return
+	}
+	if r.Method == "GET" {
+		post_id, _ := strconv.Atoi(r.Form.Get("id"))
+
+		if post_id == 0 {
+			http.NotFound(w, r)
+			return
+		}
+
+		//db
+		db, err := sql.Open("mysql", "admin:1qaz2wsx@tcp(106.186.121.97:3306)/webapp?charset=utf8")
+		checkErr(err)
+		defer db.Close()
+		//查詢數據
+		stmt, err := db.Prepare("delete from posts where id=? and uid=?")
+		checkErr(err)
+		res, err := stmt.Exec(post_id, login_uid)
+		checkErr(err)
+		affect, err := res.RowsAffected()
+		checkErr(err)
+		if affect > 0 {
+			http.Redirect(w, r, "/posts", 302)
+			return
+		} else {
+			http.Error(w, "删除失败", http.StatusForbidden)
+			return
+		}
 	}
 }
 
