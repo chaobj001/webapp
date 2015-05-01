@@ -20,7 +20,7 @@
                 {{with .Post}}
                     <h2>{{.Title}}</h2>
                     <article class="markdown-body">{{.Content}}</article>
-                    <p>{{.Date}} <a href="/edit?post_id={{.Id}}"><small>edit</small></a></p>
+                    <p>{{.Date}} <a href="/edit?id={{.Id}}"><small>edit</small></a> <a href="/remove?id={{.Id}}"><small>del</small></a></p>
                 {{end}}
                 <ul>
                     {{with .Replies}}
