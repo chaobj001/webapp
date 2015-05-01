@@ -148,7 +148,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	limit := 5
-	p, _ := strconv.Atoi(r.Form.Get("page"))
+	p, _ := strconv.Atoi(r.Form.Get("p"))
 	if p == 0 {
 		p = 1
 	}
@@ -186,7 +186,7 @@ func postsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//分頁
-	page := &PageNav{url: "/posts?page=", pagesize: limit, length: total}
+	page := &PageNav{url: "/posts?p=", pagesize: limit, length: total}
 	data.PageNav = page.getPage()
 
 	//fmt.Println(data)
@@ -202,7 +202,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request form data", 400)
 		return
 	}
-	post_id, _ := strconv.Atoi(r.Form.Get("post_id"))
+	post_id, _ := strconv.Atoi(r.Form.Get("id"))
 	if post_id == 0 {
 		http.NotFound(w, r)
 		return
@@ -283,7 +283,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if r.Method == "GET" {
-		post_id, _ := strconv.Atoi(r.Form.Get("post_id"))
+		post_id, _ := strconv.Atoi(r.Form.Get("id"))
 
 		if post_id == 0 {
 			http.NotFound(w, r)
@@ -357,7 +357,7 @@ func editHandler(w http.ResponseWriter, r *http.Request) {
 		affect, err := res.RowsAffected()
 		checkErr(err)
 		if affect > 0 {
-			http.Redirect(w, r, "/post?post_id="+strconv.Itoa(id), 302)
+			http.Redirect(w, r, "/post?id="+strconv.Itoa(id), 302)
 			return
 		} else {
 			http.Error(w, "编辑失败", http.StatusForbidden)
@@ -423,7 +423,7 @@ func replyHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "事务失败", http.StatusForbidden)
 		return
 	}
-	http.Redirect(w, r, "/post?post_id="+strconv.Itoa(reply_id), 302)
+	http.Redirect(w, r, "/post?id="+strconv.Itoa(reply_id), 302)
 	return
 }
 
